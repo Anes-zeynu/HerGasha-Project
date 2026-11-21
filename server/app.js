@@ -72,35 +72,17 @@ app.get("/favicon.ico", (req, res) => {
   res.status(204).end();
 });
 
-// API routes
+// 9. API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/opportunities", opportunityRoutes);
 app.use("/api/support", supportRoutes);
 
-// ADD THIS CODE HERE
-
-// Root endpoint
-app.get("/", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Welcome to Her Gasha API",
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// Favicon handler
-app.get("/favicon.ico", (req, res) => {
-  res.status(204).end();
-});
-
-// DO NOT MOVE THESE
-
-// Handle unknown routes
+// 10. Handle unknown routes
 app.use(notFound);
 
-// Global error handler
+// 11. Global error handler
 app.use(errorHandler);
 
 export default app;

@@ -3,10 +3,10 @@ import multer from "multer";
 // Allowed file types
 const allowedMimeTypes = ["image/jpeg", "image/png", "application/pdf"];
 
-// Configure memory storage
+// Memory storage
 const storage = multer.memoryStorage();
 
-// File validation
+// Validate uploaded files
 const fileFilter = (req, file, callback) => {
   if (!allowedMimeTypes.includes(file.mimetype)) {
     return callback(new Error("Only JPEG, PNG and PDF files are allowed"));
@@ -15,17 +15,20 @@ const fileFilter = (req, file, callback) => {
   callback(null, true);
 };
 
-// Configure upload
+// Shared Multer configuration
 const upload = multer({
   storage,
   fileFilter,
 
   limits: {
     fileSize: 5 * 1024 * 1024, // 5 MB per file
+    fields: 20,
     files: 3,
-    fields: 10,
   },
 });
 
-// Export upload middleware
+// Report evidence upload: maximum 3 files
 export const uploadEvidence = upload.array("evidence", 3);
+
+// Organization trade license: exactly one file maximum
+export const uploadTradeLicense = upload.single("tradeLicense");

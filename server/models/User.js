@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema(
   {
+    // Basic account information
     name: {
       type: String,
       required: [true, "Name is required"],
@@ -31,6 +32,7 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
+    // Account role
     role: {
       type: String,
       enum: [
@@ -44,6 +46,7 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Student information
     university: {
       type: String,
       trim: true,
@@ -51,11 +54,87 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    // Shared contact information
     phone: {
       type: String,
       trim: true,
       maxlength: 25,
       default: "",
+    },
+
+    // Organization information
+    organizationName: {
+      type: String,
+      trim: true,
+      maxlength: 200,
+      default: "",
+    },
+
+    registrationNumber: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+      default: "",
+    },
+
+    tradeLicenseNumber: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+      default: "",
+    },
+
+    website: {
+      type: String,
+      trim: true,
+      maxlength: 255,
+      default: "",
+    },
+
+    address: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+      default: "",
+    },
+
+    description: {
+      type: String,
+      trim: true,
+      maxlength: 2000,
+      default: "",
+    },
+
+    // Stored document information.
+    // The actual file must be uploaded to persistent storage.
+    tradeLicense: {
+      url: {
+        type: String,
+        default: "",
+      },
+      publicId: {
+        type: String,
+        default: "",
+      },
+      originalName: {
+        type: String,
+        default: "",
+      },
+      mimeType: {
+        type: String,
+        default: "",
+      },
+      size: {
+        type: Number,
+        default: 0,
+      },
+    },
+
+    // Organization verification
+    organizationVerificationStatus: {
+      type: String,
+      enum: ["not_applicable", "pending", "approved", "rejected"],
+      default: "not_applicable",
     },
 
     isVerified: {
@@ -73,7 +152,6 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
   },
-
   {
     timestamps: true,
   },
