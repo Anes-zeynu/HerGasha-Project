@@ -16,10 +16,10 @@ import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 
 const app = express();
 
-// Security middleware
+// 1. Security middleware
 app.use(helmet());
 
-// CORS configuration
+// 2. CORS configuration
 app.use(
   cors({
     origin: process.env.CLIENT_URL || "http://localhost:5173",
@@ -27,14 +27,14 @@ app.use(
   }),
 );
 
-// Parse incoming requests
+// 3. Parse incoming requests
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
-// Parse cookies
+// 4. Parse cookies
 app.use(cookieParser());
 
-// General API rate limiter
+// 5. General API rate limiter
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
@@ -48,13 +48,28 @@ const apiLimiter = rateLimit({
 
 app.use("/api", apiLimiter);
 
-// Health check
+// 6. Root endpoint
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Welcome to Her Gasha API",
+    version: "1.0.0",
+    documentation: "/api/health",
+  });
+});
+
+// 7. Health check
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
     message: "Her Gasha API is running",
     timestamp: new Date().toISOString(),
   });
+});
+
+// 8. Favicon handler
+app.get("/favicon.ico", (req, res) => {
+  res.status(204).end();
 });
 
 // API routes
@@ -64,10 +79,28 @@ app.use("/api/users", userRoutes);
 app.use("/api/opportunities", opportunityRoutes);
 app.use("/api/support", supportRoutes);
 
+// ADD THIS CODE HERE
+
+// Root endpoint
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Welcome to Her Gasha API",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Favicon handler
+app.get("/favicon.ico", (req, res) => {
+  res.status(204).end();
+});
+
+// DO NOT MOVE THESE
+
 // Handle unknown routes
 app.use(notFound);
 
-// Global error handler (must be last)
+// Global error handler
 app.use(errorHandler);
 
 export default app;

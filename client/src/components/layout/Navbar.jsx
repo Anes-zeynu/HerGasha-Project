@@ -6,13 +6,11 @@ import {
   X,
   Heart,
   LayoutDashboard,
-  FileText,
   BriefcaseBusiness,
   HandHeart,
   LogIn,
   UserPlus,
   LogOut,
-  ChevronDown,
   ShieldCheck
 } from "lucide-react";
 
@@ -20,8 +18,7 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Temporary authentication check.
-  // Replace with AuthContext when authentication is integrated.
+  // Authentication check
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const isAuthenticated = Boolean(token && user);
@@ -127,8 +124,9 @@ const Navbar = () => {
                 Login
               </Link>
 
+              {/* Updated destination */}
               <Link
-                to="/register"
+                to="/join"
                 className="rounded-lg bg-[#D90083] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#B80070]"
               >
                 Join Her Gasha
@@ -200,8 +198,9 @@ const Navbar = () => {
                   Login
                 </Link>
 
+                {/* Updated destination */}
                 <Link
-                  to="/register"
+                  to="/join"
                   onClick={() => setIsOpen(false)}
                   className="flex items-center justify-center gap-2 rounded-lg bg-[#D90083] px-4 py-3 text-sm font-semibold text-white"
                 >
