@@ -9,7 +9,7 @@ const startServer = async () => {
   try {
     await connectDB();
 
-    app.listen(PORT, () => {
+    app.listen(PORT, "0.0.0.0", () => {
       console.log(`Her Gasha server running on port ${PORT}`);
     });
   } catch (error) {
