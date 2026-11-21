@@ -5,7 +5,9 @@ import cloudinary from "../config/cloudinary.js";
 
 import { uploadTradeLicenseToCloudinary } from "../services/cloudinaryService.js";
 
-// Generate JWT
+// ==========================================
+// GENERATE JWT
+// ==========================================
 const generateToken = (userId) => {
   if (!process.env.JWT_SECRET) {
     throw new Error("JWT_SECRET is not configured");
@@ -14,7 +16,9 @@ const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "1d" });
 };
 
+// ==========================================
 // REGISTER STUDENT OR ORGANIZATION
+// ==========================================
 export const registerUser = async (req, res, next) => {
   let uploadedDocument = null;
 
@@ -33,9 +37,9 @@ export const registerUser = async (req, res, next) => {
       role,
     } = req.body;
 
-    // Only public registration roles are allowed.
     const accountRole = role || "student";
 
+    // Validate role.
     if (!["student", "organization"].includes(accountRole)) {
       return res.status(400).json({
         success: false,
@@ -43,7 +47,7 @@ export const registerUser = async (req, res, next) => {
       });
     }
 
-    // Basic validation
+    // Validate email and password.
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -58,7 +62,7 @@ export const registerUser = async (req, res, next) => {
       });
     }
 
-    // Organization validation
+    // Validate organization information.
     if (accountRole === "organization") {
       if (!organizationName || !phone || !tradeLicenseNumber || !address) {
         return res.status(400).json({
@@ -80,10 +84,10 @@ export const registerUser = async (req, res, next) => {
       });
     }
 
-    // Normalize email
+    // Normalize email.
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Check duplicate email
+    // Check duplicate email.
     const existingUser = await User.findOne({
       email: normalizedEmail,
     });
@@ -95,12 +99,16 @@ export const registerUser = async (req, res, next) => {
       });
     }
 
-    // Upload organization trade license
+    // Upload organization trade license.
     if (accountRole === "organization") {
       uploadedDocument = await uploadTradeLicenseToCloudinary(req.file);
+
+      if (!uploadedDocument?.publicId) {
+        throw new Error("Trade license upload failed");
+      }
     }
 
-    // Prepare account data
+    // Prepare account data.
     const userData = {
       name:
         accountRole === "organization" ? organizationName.trim() : name.trim(),
@@ -111,38 +119,53 @@ export const registerUser = async (req, res, next) => {
       phone: phone?.trim() || "",
     };
 
-    // Add organization information
+    // Add organization details.
     if (accountRole === "organization") {
       userData.organizationName = organizationName.trim();
+
       userData.registrationNumber = registrationNumber?.trim() || "";
+
       userData.tradeLicenseNumber = tradeLicenseNumber.trim();
+
       userData.website = website?.trim() || "";
       userData.address = address.trim();
       userData.description = description?.trim() || "";
 
       userData.tradeLicense = {
+        url:
+          uploadedDocument.url ||
+          uploadedDocument.secureUrl ||
+          uploadedDocument.secure_url ||
+          "",
+
         publicId: uploadedDocument.publicId,
-        originalName: uploadedDocument.originalName,
-        mimeType: uploadedDocument.mimeType,
-        size: uploadedDocument.size,
+
+        originalName: uploadedDocument.originalName || req.file.originalname,
+
+        mimeType: uploadedDocument.mimeType || req.file.mimetype,
+
+        size: uploadedDocument.size || req.file.size,
       };
 
-      // Organization must be verified by an authorized administrator.
-      userData.organizationVerificationStatus = "pending";
-      userData.isVerified = false;
+      // DEVELOPMENT MODE:
+      // Automatically approve organizations because
+      // administrator approval is not implemented yet.
+      userData.organizationVerificationStatus = "approved";
+      userData.isVerified = true;
     }
 
-    // Create MongoDB account
+    // Create MongoDB account.
     const user = await User.create(userData);
 
-    // Generate JWT
+    // Generate token for both account types.
     const token = generateToken(user._id);
 
     return res.status(201).json({
       success: true,
+
       message:
         accountRole === "organization"
-          ? "Organization registration submitted successfully. Your account is pending verification."
+          ? "Organization registered successfully. You can now log in."
           : "Registration successful",
 
       token,
@@ -157,7 +180,7 @@ export const registerUser = async (req, res, next) => {
       },
     });
   } catch (error) {
-    // Clean up uploaded document if account creation fails.
+    // Delete uploaded document if registration fails.
     if (uploadedDocument?.publicId) {
       try {
         await cloudinary.uploader.destroy(uploadedDocument.publicId, {
@@ -173,7 +196,9 @@ export const registerUser = async (req, res, next) => {
   }
 };
 
+// ==========================================
 // LOGIN
+// ==========================================
 export const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -185,6 +210,7 @@ export const loginUser = async (req, res, next) => {
       });
     }
 
+    // Find account.
     const user = await User.findOne({
       email: email.trim().toLowerCase(),
     }).select("+password");
@@ -196,28 +222,32 @@ export const loginUser = async (req, res, next) => {
       });
     }
 
-    if (!user.isActive) {
+    // Check active account.
+    if (user.isActive !== true) {
       return res.status(403).json({
         success: false,
         message: "Your account is inactive",
       });
     }
 
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    // Verify password.
+    const passwordCorrect = await bcrypt.compare(password, user.password);
 
-    if (!isPasswordCorrect) {
+    if (!passwordCorrect) {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password",
       });
     }
 
+    // Generate token.
     const token = generateToken(user._id);
 
     return res.status(200).json({
       success: true,
       message: "Login successful",
       token,
+
       user: {
         id: user._id,
         name: user.name,
@@ -232,7 +262,9 @@ export const loginUser = async (req, res, next) => {
   }
 };
 
+// ==========================================
 // GET CURRENT USER
+// ==========================================
 export const getCurrentUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id).select("-password");

@@ -1,22 +1,21 @@
 
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
 import {
-  LockKeyhole,
+  ShieldCheck,
   Mail,
+  LockKeyhole,
   Eye,
   EyeOff,
-  LogIn,
-  ShieldCheck,
   AlertCircle,
+  Loader2,
+  ArrowRight,
 } from "lucide-react";
-
 import useAuth from "../../hooks/useAuth.js";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuthenticated, user, loading: authLoading } = useAuth();
 
   const [form, setForm] = useState({
     email: "",
@@ -24,11 +23,27 @@ const Login = () => {
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
+  // Redirect an already authenticated user
+  if (!authLoading && isAuthenticated && user) {
+    const destination =
+      user.role === "organization"
+        ? "/organization/dashboard"
+        : "/dashboard";
+
+    return (
+      <RedirectUser
+        navigate={navigate}
+        destination={destination}
+      />
+    );
+  }
+
+  // Handle form changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
 
     setForm((previous) => ({
       ...previous,
@@ -38,179 +53,225 @@ const Login = () => {
     setError("");
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setError("");
+  // Submit login form
 
-    if (!form.email.trim() || !form.password) {
-      setError("Please enter your email and password.");
-      return;
-    }
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
 
-    try {
-      setLoading(true);
+  try {
+    setSubmitting(true);
 
-      await login({
-        email: form.email.trim().toLowerCase(),
-        password: form.password,
-      });
+    const loggedInUser = await login({
+      email: form.email.trim().toLowerCase(),
+      password: form.password,
+    });
 
+    if (loggedInUser.role === "organization") {
+      navigate("/organization/dashboard", { replace: true });
+    } else {
       navigate("/dashboard", { replace: true });
-
-    } catch (err) {
-      setError(
-        err.message || "Login failed. Please check your details."
-      );
-    } finally {
-      setLoading(false);
     }
-  };
+
+  } catch (err) {
+    setError(err.message || "Login failed. Please try again.");
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#FFF3F9] to-pink-100 px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center px-4 py-12">
 
-      <div className="w-full max-w-md rounded-3xl border border-pink-100 bg-white p-7 shadow-xl sm:p-9">
+      <div className="w-full max-w-md">
 
-        {/* Header */}
-        <div className="text-center">
+        {/* Brand */}
+        <div className="text-center mb-8">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-3 mb-5"
+          >
+            <div className="w-12 h-12 rounded-xl bg-green-700 flex items-center justify-center shadow-lg">
+              <ShieldCheck className="w-7 h-7 text-white" />
+            </div>
 
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#4B1248] text-white">
-            <ShieldCheck size={33} />
-          </div>
+            <span className="text-2xl font-bold text-green-800">
+              Her Gasha
+            </span>
+          </Link>
 
-          <h1 className="mt-5 text-3xl font-extrabold text-[#4B1248]">
+          <h1 className="text-3xl font-bold text-gray-900">
             Welcome Back
           </h1>
 
-          <p className="mt-2 text-sm text-gray-500">
-            Sign in to continue to Her Gasha.
+          <p className="mt-2 text-gray-500">
+            Sign in to your Her Gasha account
           </p>
+        </div>
+
+        {/* Login Card */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
+
+          {error && (
+            <div
+              role="alert"
+              className="mb-5 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700"
+            >
+              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+
+              <p className="text-sm">
+                {error}
+              </p>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+
+            {/* Email */}
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-semibold text-gray-700 mb-2"
+              >
+                Email Address
+              </label>
+
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+
+                <input
+                  id="email"
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  placeholder="Enter your email"
+                  autoComplete="email"
+                  required
+                  disabled={submitting}
+                  className="w-full rounded-lg border border-gray-300 py-3 pl-11 pr-4 outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100 disabled:bg-gray-100"
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-semibold text-gray-700 mb-2"
+              >
+                Password
+              </label>
+
+              <div className="relative">
+                <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="Enter your password"
+                  autoComplete="current-password"
+                  required
+                  disabled={submitting}
+                  className="w-full rounded-lg border border-gray-300 py-3 pl-11 pr-12 outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100 disabled:bg-gray-100"
+                />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowPassword((previous) => !previous)
+                  }
+                  disabled={submitting}
+                  aria-label={
+                    showPassword ? "Hide password" : "Show password"
+                  }
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-green-700"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={submitting || authLoading}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-700 px-4 py-3 font-semibold text-white shadow-md transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                <>
+                  Sign In
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
+            </button>
+
+          </form>
+
+          {/* Registration */}
+          <div className="mt-7 border-t border-gray-100 pt-6 text-center">
+            <p className="text-sm text-gray-600">
+              Don't have an account?
+            </p>
+
+            <div className="mt-3 flex flex-col items-center gap-3">
+              <Link
+                to="/register"
+                className="font-semibold text-green-700 hover:text-green-900 hover:underline"
+              >
+                Register as Student
+              </Link>
+
+              <Link
+                to="/join"
+                className="font-semibold text-green-700 hover:text-green-900 hover:underline"
+              >
+                Register as Organization
+              </Link>
+            </div>
+          </div>
 
         </div>
 
-        {/* Error */}
-        {error && (
-          <div
-            role="alert"
-            className="mt-7 flex items-start gap-2 rounded-xl bg-red-50 p-4 text-sm text-red-700"
-          >
-            <AlertCircle size={18} className="mt-0.5 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {/* Login Form */}
-        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-
-          {/* Email */}
-          <div>
-            <label
-              htmlFor="email"
-              className="mb-2 block text-sm font-semibold text-[#4B1248]"
-            >
-              Email Address
-            </label>
-
-            <div className="relative">
-
-              <Mail
-                size={19}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-              />
-
-              <input
-                id="email"
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                required
-                autoComplete="email"
-                placeholder="Enter your email"
-                className="w-full rounded-xl border border-gray-200 py-3.5 pl-12 pr-4 outline-none transition focus:border-[#D90083] focus:ring-2 focus:ring-pink-100"
-              />
-
-            </div>
-          </div>
-
-          {/* Password */}
-          <div>
-            <label
-              htmlFor="password"
-              className="mb-2 block text-sm font-semibold text-[#4B1248]"
-            >
-              Password
-            </label>
-
-            <div className="relative">
-
-              <LockKeyhole
-                size={19}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-              />
-
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                name="password"
-                value={form.password}
-                onChange={handleChange}
-                required
-                autoComplete="current-password"
-                placeholder="Enter your password"
-                className="w-full rounded-xl border border-gray-200 py-3.5 pl-12 pr-12 outline-none transition focus:border-[#D90083] focus:ring-2 focus:ring-pink-100"
-              />
-
-              <button
-                type="button"
-                onClick={() => setShowPassword((previous) => !previous)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#D90083]"
-              >
-                {showPassword ? (
-                  <EyeOff size={19} />
-                ) : (
-                  <Eye size={19} />
-                )}
-              </button>
-
-            </div>
-          </div>
-
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#D90083] py-4 font-bold text-white shadow-md transition hover:bg-[#B80070] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loading ? "Signing in..." : "Login"}
-
-            {!loading && <LogIn size={18} />}
-          </button>
-
-        </form>
-
-        {/* Register Link */}
-        <p className="mt-7 text-center text-sm text-gray-600">
-          Don't have an account?{" "}
+        {/* Footer */}
+        <div className="mt-7 text-center">
+          <p className="text-sm text-gray-500">
+            Your Safety. Your Voice. Your Opportunity.
+          </p>
 
           <Link
-            to="/register"
-            className="font-bold text-[#D90083] hover:underline"
+            to="/"
+            className="mt-3 inline-block text-sm text-green-700 hover:underline"
           >
-            Create an account
+            Back to Home
           </Link>
-        </p>
-
-        {/* Footer */}
-        <div className="mt-7 flex items-center justify-center gap-2 border-t border-gray-100 pt-6 text-xs text-gray-500">
-          <LockKeyhole size={14} />
-          Her Gasha account access
         </div>
 
       </div>
     </div>
   );
+};
+
+// Small redirect component
+const RedirectUser = ({ navigate, destination }) => {
+  useState(() => {
+    navigate(destination, { replace: true });
+  });
+
+  return null;
 };
 
 export default Login;

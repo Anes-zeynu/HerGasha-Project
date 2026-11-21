@@ -6,7 +6,7 @@ export default function ProtectedRoute({ allowedRoles }) {
   const { isAuthenticated, user, loading } = useAuth();
   const location = useLocation();
 
-  // Wait until authentication information is loaded.
+  // 1. Wait for authentication verification
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-pinkBg">
@@ -17,8 +17,8 @@ export default function ProtectedRoute({ allowedRoles }) {
     );
   }
 
-  // Redirect users who are not logged in.
-  if (!isAuthenticated) {
+  // 2. Redirect users who are not authenticated
+  if (!isAuthenticated || !user) {
     return (
       <Navigate
         to="/login"
@@ -28,10 +28,22 @@ export default function ProtectedRoute({ allowedRoles }) {
     );
   }
 
-  // Check the user's role when a route has role restrictions.
-  if (allowedRoles && !allowedRoles.includes(user?.role)) {
-    return <Navigate to="/dashboard" replace />;
+  // 3. Determine the correct dashboard
+  const dashboard =
+    user.role === "organization"
+      ? "/organization/dashboard"
+      : "/dashboard";
+
+  // 4. Prevent users from accessing unauthorized pages
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return (
+      <Navigate
+        to={dashboard}
+        replace
+      />
+    );
   }
 
+  // 5. Allow authorized users to access the requested page
   return <Outlet />;
 }

@@ -1,40 +1,51 @@
 
 import { Routes, Route, Navigate } from "react-router-dom";
 
-// Pages
+// Public pages
 import Home from "../components/pages/Home.jsx";
-import Report from "../components/pages/Report.jsx";
-import Dashboard from "../components/pages/Dashboard.jsx";
 import Opportunities from "../components/pages/Opportunities.jsx";
-import Support from "../components/pages/Support.jsx";
 import Login from "../components/pages/Login.jsx";
 import Register from "../components/pages/Register.jsx";
 import RoleSelection from "../components/pages/RoleSelection.jsx";
 import OrganizationRegister from "../components/pages/OrganizationRegister.jsx";
 import CloudinaryTest from "../components/pages/CloudinaryTest.jsx";
+
+// Student pages
+import Report from "../components/pages/Report.jsx";
+import Dashboard from "../components/pages/Dashboard.jsx";
+import Support from "../components/pages/Support.jsx";
+
+// Organization pages
+import OrganizationDashboard from "../organization/OrganizationDashboard.jsx";
+import MyOpportunities from "../organization/MyOpportunities.jsx";
+import Applications from "../organization/Applications.jsx";
+import OrganizationProfile from "../organization/OrganizationProfile.jsx";
+import OrganizationSettings from "../organization/OrganizationSettings.jsx";
+
 // Layout
 import MainLayout from "../components/layout/MainLayout";
 
-// Route protection
+// Authentication
 import ProtectedRoute from "./ProtectedRoute";
-
-// Authentication hook
 import useAuth from "../hooks/useAuth";
 
-// Redirect authenticated users away from login/register.
+// Redirect based on account role
+function getDashboardPath(user) {
+  return user?.role === "organization"
+    ? "/organization/dashboard"
+    : "/dashboard";
+}
+
+// Guest-only pages
 function GuestRoute({ children }) {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading...
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={getDashboardPath(user)} replace />;
   }
 
   return children;
@@ -43,39 +54,15 @@ function GuestRoute({ children }) {
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* =================================
-          PUBLIC PAGES
-      ================================== */}
+
+      {/* PUBLIC PAGES */}
       <Route element={<MainLayout />}>
-        {/* Homepage */}
         <Route path="/" element={<Home />} />
-
-        {/* Join Her Gasha - Select Account Type */}
         <Route path="/join" element={<RoleSelection />} />
-
-        {/* Opportunities */}
-        <Route
-          path="/opportunities"
-          element={<Opportunities />}
-        />
+        <Route path="/opportunities" element={<Opportunities />} />
       </Route>
 
-      {/* =================================
-          GUEST-ONLY PAGES
-      ================================== */}
-      <Route
-  path="/organization-register"
-  element={
-    <GuestRoute>
-      <OrganizationRegister />
-    </GuestRoute>
-  }
-/>
-<Route
-  path="/cloudinary-test"
-  element={<CloudinaryTest />}
-/>
-      {/* Login */}
+      {/* GUEST PAGES */}
       <Route
         path="/login"
         element={
@@ -85,7 +72,6 @@ export default function AppRoutes() {
         }
       />
 
-      {/* Student Registration */}
       <Route
         path="/register"
         element={
@@ -95,38 +81,38 @@ export default function AppRoutes() {
         }
       />
 
-      {/* =================================
-          AUTHENTICATED PAGES
-      ================================== */}
-      <Route element={<ProtectedRoute />}>
+      <Route
+        path="/organization-register"
+        element={
+          <GuestRoute>
+            <OrganizationRegister />
+          </GuestRoute>
+        }
+      />
+
+      <Route path="/cloudinary-test" element={<CloudinaryTest />} />
+
+      {/* STUDENT ROUTES */}
+      <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
         <Route element={<MainLayout />}>
-          {/* Dashboard */}
-          <Route
-            path="/dashboard"
-            element={<Dashboard />}
-          />
-
-          {/* Submit and view reports */}
-          <Route
-            path="/report"
-            element={<Report />}
-          />
-
-          {/* Support */}
-          <Route
-            path="/support"
-            element={<Support />}
-          />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/report" element={<Report />} />
+          <Route path="/support" element={<Support />} />
         </Route>
       </Route>
 
-      {/* =================================
-          UNKNOWN ROUTES
-      ================================== */}
-      <Route
-        path="*"
-        element={<Navigate to="/" replace />}
-      />
+      {/* ORGANIZATION ROUTES */}
+      <Route element={<ProtectedRoute allowedRoles={["organization"]} />}>
+        <Route path="/organization/dashboard" element={<OrganizationDashboard />} />
+        <Route path="/organization/opportunities" element={<MyOpportunities />} />
+        <Route path="/organization/applications" element={<Applications />} />
+        <Route path="/organization/profile" element={<OrganizationProfile />} />
+        <Route path="/organization/settings" element={<OrganizationSettings />} />
+      </Route>
+
+      {/* UNKNOWN ROUTES */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+
     </Routes>
   );
 }

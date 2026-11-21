@@ -3,7 +3,9 @@ import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema(
   {
-    // Basic account information
+    // ======================================
+    // BASIC ACCOUNT INFORMATION
+    // ======================================
     name: {
       type: String,
       required: [true, "Name is required"],
@@ -32,7 +34,9 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
-    // Account role
+    // ======================================
+    // ACCOUNT ROLE
+    // ======================================
     role: {
       type: String,
       enum: [
@@ -46,7 +50,9 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
-    // Student information
+    // ======================================
+    // STUDENT INFORMATION
+    // ======================================
     university: {
       type: String,
       trim: true,
@@ -54,7 +60,9 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
-    // Shared contact information
+    // ======================================
+    // SHARED CONTACT INFORMATION
+    // ======================================
     phone: {
       type: String,
       trim: true,
@@ -62,7 +70,9 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
-    // Organization information
+    // ======================================
+    // ORGANIZATION INFORMATION
+    // ======================================
     organizationName: {
       type: String,
       trim: true,
@@ -105,32 +115,39 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
-    // Stored document information.
-    // The actual file must be uploaded to persistent storage.
+    // ======================================
+    // TRADE LICENSE DOCUMENT
+    // ======================================
     tradeLicense: {
       url: {
         type: String,
         default: "",
       },
+
       publicId: {
         type: String,
         default: "",
       },
+
       originalName: {
         type: String,
         default: "",
       },
+
       mimeType: {
         type: String,
         default: "",
       },
+
       size: {
         type: Number,
         default: 0,
       },
     },
 
-    // Organization verification
+    // ======================================
+    // ORGANIZATION VERIFICATION
+    // ======================================
     organizationVerificationStatus: {
       type: String,
       enum: ["not_applicable", "pending", "approved", "rejected"],
@@ -142,6 +159,9 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
 
+    // ======================================
+    // ACCOUNT STATUS
+    // ======================================
     isActive: {
       type: Boolean,
       default: true,
@@ -157,18 +177,27 @@ const userSchema = new mongoose.Schema(
   },
 );
 
-// Hash password before saving
+// ==========================================
+// HASH PASSWORD BEFORE SAVING
+// ==========================================
 userSchema.pre("save", async function () {
-  if (!this.isModified("password")) return;
+  if (!this.isModified("password")) {
+    return;
+  }
 
   this.password = await bcrypt.hash(this.password, 12);
 });
 
-// Compare entered password with hashed password
+// ==========================================
+// COMPARE PASSWORD
+// ==========================================
 userSchema.methods.comparePassword = async function (enteredPassword) {
   return bcrypt.compare(enteredPassword, this.password);
 };
 
+// ==========================================
+// CREATE MODEL
+// ==========================================
 const User = mongoose.model("User", userSchema);
 
 export default User;
