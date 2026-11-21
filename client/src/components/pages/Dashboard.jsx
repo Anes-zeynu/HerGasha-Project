@@ -34,17 +34,20 @@ const Dashboard = () => {
       const reportData = reportsResponse.data;
       const supportData = supportResponse.data;
 
-      setReports(
-        Array.isArray(reportData)
-          ? reportData
-          : reportData.reports || reportData.data || []
-      );
+      const reportList = Array.isArray(reportData)
+        ? reportData
+        : reportData.reports || reportData.data || [];
 
-      setSupportRequests(
-        Array.isArray(supportData)
-          ? supportData
-          : supportData.supportRequests || supportData.data || []
-      );
+      const supportList = Array.isArray(supportData)
+        ? supportData
+        : supportData.requests ||
+          supportData.supportRequests ||
+          supportData.data ||
+          [];
+
+      setReports(reportList);
+      setSupportRequests(supportList);
+
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -140,7 +143,6 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Statistics */}
         <div className="mb-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard
             title="My Reports"
@@ -164,7 +166,6 @@ const Dashboard = () => {
           />
         </div>
 
-        {/* Quick Actions */}
         <div className="mb-10 grid gap-5 md:grid-cols-3">
           <Link
             to="/report"
@@ -206,7 +207,6 @@ const Dashboard = () => {
           </Link>
         </div>
 
-        {/* Reports */}
         <section className="mb-8 rounded-2xl border border-pink-100 bg-white p-6 shadow-sm sm:p-8">
           <div className="mb-6 flex items-center justify-between">
             <div>
@@ -259,7 +259,6 @@ const Dashboard = () => {
           )}
         </section>
 
-        {/* Support Requests */}
         <section className="rounded-2xl border border-pink-100 bg-white p-6 shadow-sm sm:p-8">
           <div className="mb-6 flex items-center justify-between">
             <div>
@@ -296,7 +295,7 @@ const Dashboard = () => {
                 >
                   <div>
                     <h3 className="font-semibold capitalize text-[#4B1248]">
-                      {request.category || "Support"}
+                      {(request.category || "Support").replaceAll("_", " ")}
                     </h3>
                     <p className="mt-1 text-xs text-gray-500">
                       {request.createdAt

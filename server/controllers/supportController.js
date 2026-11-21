@@ -21,10 +21,21 @@ export const createSupportRequest = async (req, res, next) => {
       });
     }
 
-    if (description.trim().length < 10) {
+    if (
+      typeof description !== "string" ||
+      description.trim().length < 10 ||
+      description.trim().length > 5000
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Please provide more information",
+        message: "Description must contain between 10 and 5000 characters",
+      });
+    }
+
+    if (preferredContact && !["email", "phone"].includes(preferredContact)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid preferred contact method",
       });
     }
 
@@ -40,9 +51,10 @@ export const createSupportRequest = async (req, res, next) => {
       success: true,
       message: "Your support request was submitted successfully",
       request: {
-        id: request._id,
+        _id: request._id,
         category: request.category,
         status: request.status,
+        preferredContact: request.preferredContact,
         createdAt: request.createdAt,
       },
     });

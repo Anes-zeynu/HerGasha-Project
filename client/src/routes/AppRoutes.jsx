@@ -11,6 +11,7 @@ import Login from "../components/pages/Login.jsx";
 import Register from "../components/pages/Register.jsx";
 import RoleSelection from "../components/pages/RoleSelection.jsx";
 import OrganizationRegister from "../components/pages/OrganizationRegister.jsx";
+import CloudinaryTest from "../components/pages/CloudinaryTest.jsx";
 // Layout
 import MainLayout from "../components/layout/MainLayout";
 
@@ -69,6 +70,10 @@ export default function AppRoutes() {
       <OrganizationRegister />
     </GuestRoute>
   }
+/>
+<Route
+  path="/cloudinary-test"
+  element={<CloudinaryTest />}
 />
       {/* Login */}
       <Route

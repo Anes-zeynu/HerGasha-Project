@@ -64,6 +64,11 @@ const Support = () => {
     setError("");
     setSuccess("");
 
+    if (!form.category) {
+      setError("Please select a support category.");
+      return;
+    }
+
     if (form.description.trim().length < 10) {
       setError("Please provide at least 10 characters describing your request.");
       return;
@@ -78,7 +83,9 @@ const Support = () => {
       });
 
       if (response.data.success === false) {
-        throw new Error(response.data.message || "Unable to submit your request.");
+        throw new Error(
+          response.data.message || "Unable to submit your request."
+        );
       }
 
       setSuccess("Your support request has been submitted successfully.");
@@ -119,7 +126,6 @@ const Support = () => {
           </p>
         </div>
 
-        {/* Support Categories */}
         <div className="mb-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {supportTypes.map((item) => {
             const Icon = item.icon;
@@ -162,7 +168,6 @@ const Support = () => {
           })}
         </div>
 
-        {/* Request Form */}
         <form
           onSubmit={handleSubmit}
           className="rounded-2xl border border-pink-100 bg-white p-6 shadow-sm sm:p-9"
